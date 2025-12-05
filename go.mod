@@ -1,6 +1,6 @@
 module github.com/user/stock-recommender
 
-go 1.25.4
+go 1.24
 
 require (
 	github.com/PuerkitoBio/goquery v1.11.0

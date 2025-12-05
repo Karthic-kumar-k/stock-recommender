@@ -23,42 +23,86 @@ StockChef is a Go-based stock recommendation application that analyzes news, mar
 
 ### Prerequisites
 
-- Go 1.22 or later
-- Docker & Docker Compose (for PostgreSQL)
-- (Optional) Ollama for local LLM
+- Docker & Docker Compose
 
-### Installation
+That's it! No need to install Go, PostgreSQL, or Ollama - everything runs in containers.
+
+### Quick Start (Docker - Recommended)
 
 1. Clone the repository:
 ```bash
 cd stock-recommender
 ```
 
-2. Copy the example environment file and configure:
+2. Copy the example environment file:
 ```bash
 cp env.example .env
-# Edit .env with your settings (database password, API keys, etc.)
+# Optionally edit .env to customize settings
 ```
 
-3. Start PostgreSQL with Docker:
+3. Start all services:
 ```bash
-docker compose up -d
+make docker-up
+# Or: docker compose up -d
 ```
 
-4. Install dependencies and run:
+4. Wait for the Ollama model to download (first run only, ~4GB):
 ```bash
-go mod tidy
-go run cmd/recommender/main.go
+make docker-logs-ollama
+# Wait until you see "Model pulled successfully!"
 ```
 
 5. Open http://localhost:8081 in your browser.
 
-### Stopping the Database
+### Docker Commands
+
+```bash
+make docker-up          # Start all services
+make docker-down        # Stop all services
+make docker-logs        # View all logs
+make docker-logs-app    # View app logs only
+make docker-logs-ollama # View Ollama logs
+make docker-rebuild     # Rebuild app after code changes
+make docker-clean       # Remove everything (including data)
+```
+
+### Manual Installation (Without Docker)
+
+If you prefer to run without Docker:
+
+1. Install Go 1.22+, PostgreSQL 14+, and Ollama
+2. Copy and configure `.env`
+3. Create database: `createdb stock_recommender`
+4. Pull Ollama model: `ollama pull llama2`
+5. Run: `go run cmd/recommender/main.go`
+
+### Stopping Services
 
 ```bash
 docker compose down        # Stop containers (data persists)
-docker compose down -v     # Stop and remove data
+docker compose down -v     # Stop and remove all data
 ```
+
+### GPU Support for Ollama (Optional)
+
+If you have an NVIDIA GPU, you can enable GPU acceleration for faster LLM inference:
+
+1. Install [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+
+2. Uncomment the GPU section in `docker-compose.yml`:
+```yaml
+ollama:
+  # ...
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: 1
+            capabilities: [gpu]
+```
+
+3. Restart the services: `make docker-restart`
 
 ### Security Notes
 

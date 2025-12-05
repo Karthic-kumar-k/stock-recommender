@@ -51,15 +51,166 @@ type DailyPicksFilter struct {
 
 // DailyPicksResult contains the daily picks analysis result.
 type DailyPicksResult struct {
-	GeneratedAt    time.Time    `json:"generated_at"`
-	Picks          []DailyPick  `json:"picks"`
-	TotalAnalyzed  int          `json:"total_analyzed"`
-	MarketSentiment string      `json:"market_sentiment"`
+	GeneratedAt     time.Time    `json:"generated_at"`
+	Picks           []DailyPick  `json:"picks"`
+	TotalAnalyzed   int          `json:"total_analyzed"`
+	TotalCandidates int          `json:"total_candidates"`
+	MarketSentiment string       `json:"market_sentiment"`
+	Complete        bool         `json:"complete"`
+}
+
+// DailyPickEvent represents a streaming event for daily picks.
+type DailyPickEvent struct {
+	Type            string      `json:"type"` // "pick", "progress", "complete", "error"
+	Pick            *DailyPick  `json:"pick,omitempty"`
+	Progress        int         `json:"progress,omitempty"`
+	Total           int         `json:"total,omitempty"`
+	CurrentSymbol   string      `json:"current_symbol,omitempty"`
+	Message         string      `json:"message,omitempty"`
+	MarketSentiment string      `json:"market_sentiment,omitempty"`
+	TotalPicks      int         `json:"total_picks,omitempty"`
 }
 
 // GenerateDailyPicks discovers and analyzes stocks to generate top 10 daily picks.
 func (e *Engine) GenerateDailyPicks(ctx context.Context) (*DailyPicksResult, error) {
 	return e.GenerateDailyPicksWithFilter(ctx, nil)
+}
+
+// StreamDailyPicks streams daily picks as they are generated.
+func (e *Engine) StreamDailyPicks(ctx context.Context, filter *DailyPicksFilter, eventChan chan<- DailyPickEvent) {
+	defer close(eventChan)
+
+	// Step 1: Discover trending stocks
+	eventChan <- DailyPickEvent{
+		Type:    "progress",
+		Message: "Discovering trending stocks...",
+	}
+
+	discovery := analyzer.NewStockDiscovery()
+	candidates, err := discovery.DiscoverTrendingStocks(ctx)
+	if err != nil {
+		eventChan <- DailyPickEvent{
+			Type:    "error",
+			Message: fmt.Sprintf("Failed to discover stocks: %v", err),
+		}
+		return
+	}
+
+	// Limit candidates
+	maxCandidates := 15
+	if len(candidates) > maxCandidates {
+		candidates = candidates[:maxCandidates]
+	}
+
+	eventChan <- DailyPickEvent{
+		Type:    "progress",
+		Message: fmt.Sprintf("Found %d candidates, starting analysis...", len(candidates)),
+		Total:   len(candidates),
+	}
+
+	// Step 2: Analyze each candidate sequentially and stream results
+	var picks []DailyPick
+	pickRank := 0
+
+	for i, candidate := range candidates {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		// Send progress update
+		eventChan <- DailyPickEvent{
+			Type:          "progress",
+			Progress:      i + 1,
+			Total:         len(candidates),
+			CurrentSymbol: candidate.Symbol,
+			Message:       fmt.Sprintf("Analyzing %s (%d/%d)...", candidate.Symbol, i+1, len(candidates)),
+		}
+
+		// Analyze the stock
+		analysis, err := e.AnalyzeStock(ctx, candidate.Symbol)
+		if err != nil {
+			continue
+		}
+
+		if analysis == nil || analysis.Recommendation == nil {
+			continue
+		}
+
+		rec := analysis.Recommendation
+
+		// Only include BUY recommendations
+		if rec.Action != storage.ActionBuy {
+			continue
+		}
+
+		name := candidate.Name
+		sector := ""
+		if analysis.Stock != nil {
+			if name == "" {
+				name = analysis.Stock.Name
+			}
+			sector = analysis.Stock.Sector
+		}
+
+		pickRank++
+		pick := DailyPick{
+			Rank:            pickRank,
+			Symbol:          candidate.Symbol,
+			Name:            name,
+			Sector:          sector,
+			Action:          string(rec.Action),
+			EntryPrice:      rec.EntryPrice,
+			TargetPrice:     rec.TargetPrice,
+			StopLoss:        rec.StopLoss,
+			ConfidenceScore: rec.ConfidenceScore,
+			Reasoning:       rec.Reasoning,
+			TimeHorizon:     rec.TimeHorizon,
+			RiskLevel:       rec.RiskLevel,
+			Sources:         []string{candidate.Source},
+			Recommendation:  rec,
+		}
+
+		// Add fundamental data if available
+		if analysis.Fundamental != nil {
+			pick.MarketCap = analysis.Fundamental.MarketCap
+			pick.PE = analysis.Fundamental.StockPE
+			pick.ROE = analysis.Fundamental.ROE
+		}
+
+		// Add LLM reasoning if available
+		if rec.LLMReasoning != "" {
+			pick.Reasoning = rec.LLMReasoning
+		}
+
+		// Apply filters
+		if filter != nil && !e.passesFilter(pick, analysis.Fundamental, filter) {
+			pickRank-- // Revert rank increment
+			continue
+		}
+
+		picks = append(picks, pick)
+
+		// Stream the pick immediately
+		eventChan <- DailyPickEvent{
+			Type: "pick",
+			Pick: &pick,
+		}
+
+		// Stop if we have 10 picks
+		if len(picks) >= 10 {
+			break
+		}
+	}
+
+	// Send completion event
+	eventChan <- DailyPickEvent{
+		Type:            "complete",
+		Message:         "Analysis complete",
+		TotalPicks:      len(picks),
+		MarketSentiment: e.determineMarketSentiment(picks),
+	}
 }
 
 // GenerateDailyPicksWithFilter discovers and analyzes stocks with optional filters.

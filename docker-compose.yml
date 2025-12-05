@@ -1,4 +1,35 @@
 services:
+  # Stock Recommender Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stock-recommender-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Override database host to use container name
+      DB_HOST: postgres
+      # Override Ollama URL to use container name
+      OLLAMA_URL: http://ollama:11434
+    ports:
+      - "${SERVER_PORT:-8081}:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    networks:
+      - stock-recommender-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+
+  # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
     container_name: stock-recommender-db
@@ -6,19 +37,68 @@ services:
     env_file:
       - .env
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-stock_recommender}
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - stock-recommender-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d stock_recommender"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # Ollama LLM Service
+  # NOTE: If you have Ollama running locally, you can comment out this service
+  # and set OLLAMA_URL=http://host.docker.internal:11434 in .env
+  ollama:
+    image: ollama/ollama:latest
+    container_name: stock-recommender-ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - stock-recommender-network
+    # GPU support (uncomment if you have NVIDIA GPU)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # Ollama Model Puller (one-time setup)
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: stock-recommender-ollama-pull
+    depends_on:
+      - ollama
+    networks:
+      - stock-recommender-network
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Waiting for Ollama to be ready..."
+        sleep 10
+        echo "Pulling llama2 model (this may take a while on first run)..."
+        OLLAMA_HOST=http://ollama:11434 ollama pull llama2
+        echo "Model pulled successfully!"
+    restart: "no"
+
+networks:
+  stock-recommender-network:
+    driver: bridge
+
 volumes:
   postgres_data:
+  ollama_data:
 

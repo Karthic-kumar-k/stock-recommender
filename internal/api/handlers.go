@@ -1,6 +1,9 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -300,6 +303,119 @@ func (s *Server) handleGetDailyPicks(c *gin.Context) {
 func (s *Server) handleGetDailyPicksFilters(c *gin.Context) {
 	filters := s.engine.GetAvailableFilters()
 	c.JSON(http.StatusOK, filters)
+}
+
+// handleStreamDailyPicks streams daily picks as they are generated using SSE.
+func (s *Server) handleStreamDailyPicks(c *gin.Context) {
+	// Parse filters from query params
+	filter := parseFiltersFromQuery(c)
+
+	// Set SSE headers
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	c.Header("Access-Control-Allow-Origin", "*")
+
+	// Create event channel
+	eventChan := make(chan recommender.DailyPickEvent, 10)
+
+	// Start streaming in background
+	go s.engine.StreamDailyPicks(c.Request.Context(), filter, eventChan)
+
+	// Stream events to client
+	c.Stream(func(w io.Writer) bool {
+		select {
+		case event, ok := <-eventChan:
+			if !ok {
+				return false
+			}
+
+			data, err := json.Marshal(event)
+			if err != nil {
+				return false
+			}
+
+			fmt.Fprintf(w, "data: %s\n\n", data)
+			return true
+
+		case <-c.Request.Context().Done():
+			return false
+		}
+	})
+}
+
+// parseFiltersFromQuery parses filter parameters from query string.
+func parseFiltersFromQuery(c *gin.Context) *recommender.DailyPicksFilter {
+	filter := &recommender.DailyPicksFilter{}
+	hasFilter := false
+
+	if v := c.Query("min_price"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			filter.MinPrice = f
+			hasFilter = true
+		}
+	}
+	if v := c.Query("max_price"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			filter.MaxPrice = f
+			hasFilter = true
+		}
+	}
+	if v := c.Query("min_market_cap"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			filter.MinMarketCap = f
+			hasFilter = true
+		}
+	}
+	if v := c.Query("max_market_cap"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			filter.MaxMarketCap = f
+			hasFilter = true
+		}
+	}
+	if v := c.Query("min_pe"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			filter.MinPE = f
+			hasFilter = true
+		}
+	}
+	if v := c.Query("max_pe"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			filter.MaxPE = f
+			hasFilter = true
+		}
+	}
+	if v := c.Query("min_confidence"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			filter.MinConfidence = f
+			hasFilter = true
+		}
+	}
+	if v := c.QueryArray("risk_levels"); len(v) > 0 {
+		filter.RiskLevels = v
+		hasFilter = true
+	}
+	if v := c.QueryArray("time_horizons"); len(v) > 0 {
+		filter.TimeHorizons = v
+		hasFilter = true
+	}
+	if v := c.Query("min_roe"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			filter.MinROE = f
+			hasFilter = true
+		}
+	}
+	if v := c.Query("max_debt_to_equity"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			filter.MaxDebtToEquity = f
+			hasFilter = true
+		}
+	}
+
+	if !hasFilter {
+		return nil
+	}
+	return filter
 }
 
 // handleGetStock handles getting a single stock.

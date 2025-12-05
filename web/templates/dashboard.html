@@ -43,6 +43,13 @@
         .stock-ticker {
             background: linear-gradient(90deg, transparent, var(--bg-secondary), transparent);
         }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
     </style>
 </head>
 <body class="text-slate-100">
@@ -200,6 +207,66 @@
         </div>
     </main>
 
+    <!-- Disclaimer Modal -->
+    <div id="disclaimer-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center">
+        <div class="card rounded-2xl p-8 max-w-lg w-full mx-4 transform transition-all">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold text-white">Important Disclaimer</h2>
+            </div>
+            
+            <div class="bg-slate-800/50 rounded-xl p-4 mb-6 border border-slate-700/50">
+                <p class="text-slate-300 text-sm leading-relaxed mb-3">
+                    The stock recommendations provided by this tool are for <strong class="text-white">educational and informational purposes only</strong>. They should not be considered as financial advice.
+                </p>
+                <ul class="text-slate-400 text-sm space-y-2">
+                    <li class="flex items-start space-x-2">
+                        <svg class="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Always conduct your own research before making investment decisions</span>
+                    </li>
+                    <li class="flex items-start space-x-2">
+                        <svg class="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Consult with a qualified financial advisor for personalized advice</span>
+                    </li>
+                    <li class="flex items-start space-x-2">
+                        <svg class="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Past performance does not guarantee future results</span>
+                    </li>
+                    <li class="flex items-start space-x-2">
+                        <svg class="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Investing in stocks involves risk, including loss of principal</span>
+                    </li>
+                </ul>
+            </div>
+
+            <label class="flex items-start space-x-3 cursor-pointer mb-6 p-3 rounded-lg hover:bg-slate-800/30 transition">
+                <input type="radio" id="disclaimer-acknowledge" name="disclaimer" class="mt-1 w-4 h-4 text-amber-500 bg-slate-900 border-slate-600 focus:ring-amber-500 focus:ring-2">
+                <span class="text-slate-300 text-sm">I understand that these recommendations are not financial advice and I will conduct my own research before making any investment decisions.</span>
+            </label>
+
+            <div class="flex space-x-3">
+                <button onclick="closeDisclaimerModal()" class="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition">
+                    Cancel
+                </button>
+                <button onclick="acceptDisclaimer()" id="accept-disclaimer-btn" disabled class="flex-1 px-4 py-3 bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 disabled:from-slate-700 disabled:to-slate-600 disabled:cursor-not-allowed rounded-lg font-medium transition shadow-lg shadow-amber-500/20 disabled:shadow-none">
+                    I Understand, Continue
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Daily Picks Modal -->
     <div id="daily-picks-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 overflow-y-auto">
         <div class="min-h-screen px-4 py-8 flex items-start justify-center">
@@ -219,6 +286,14 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
+                </div>
+
+                <!-- Disclaimer reminder banner -->
+                <div class="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="text-amber-200/80 text-xs">Remember: These are AI-generated suggestions. Always do your own research before investing.</span>
                 </div>
 
                 <!-- Filters Section -->
@@ -327,18 +402,6 @@
                     </div>
                 </div>
 
-                <!-- Loading State -->
-                <div id="daily-picks-loading" class="hidden py-12 text-center">
-                    <div class="inline-flex items-center space-x-3">
-                        <svg class="animate-spin h-8 w-8 text-amber-400" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span class="text-slate-300 text-lg">Scanning markets & analyzing stocks...</span>
-                    </div>
-                    <p class="text-slate-500 mt-3 text-sm">This may take a minute as we analyze multiple sources</p>
-                </div>
-
                 <!-- Results -->
                 <div id="daily-picks-results" class="hidden">
                     <!-- Market Sentiment -->
@@ -363,6 +426,17 @@
                             </thead>
                             <tbody id="daily-picks-table" class="divide-y divide-slate-800"></tbody>
                         </table>
+                    </div>
+
+                    <!-- Loading State (shows below table while streaming) -->
+                    <div id="daily-picks-loading" class="hidden mt-6 py-6 text-center border-t border-slate-700/50">
+                        <div class="inline-flex items-center space-x-3">
+                            <svg class="animate-spin h-6 w-6 text-amber-400" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span class="text-slate-400">Analyzing more stocks...</span>
+                        </div>
                     </div>
 
                     <!-- Detailed Reasoning (expandable) -->
@@ -487,11 +561,52 @@
             if (e.key === 'Escape') {
                 closeAnalyzeModal();
                 closeDailyPicksModal();
+                closeDisclaimerModal();
+            }
+        });
+
+        // Disclaimer Functions
+        let disclaimerAccepted = false;
+
+        function generateDailyPicks() {
+            if (disclaimerAccepted) {
+                openDailyPicksModal();
+            } else {
+                openDisclaimerModal();
+            }
+        }
+
+        function openDisclaimerModal() {
+            document.getElementById('disclaimer-modal').classList.remove('hidden');
+            document.getElementById('disclaimer-acknowledge').checked = false;
+            document.getElementById('accept-disclaimer-btn').disabled = true;
+        }
+
+        function closeDisclaimerModal() {
+            document.getElementById('disclaimer-modal').classList.add('hidden');
+        }
+
+        function acceptDisclaimer() {
+            if (document.getElementById('disclaimer-acknowledge').checked) {
+                disclaimerAccepted = true;
+                closeDisclaimerModal();
+                openDailyPicksModal();
+            }
+        }
+
+        // Enable/disable accept button based on radio selection
+        document.addEventListener('DOMContentLoaded', function() {
+            const radio = document.getElementById('disclaimer-acknowledge');
+            const btn = document.getElementById('accept-disclaimer-btn');
+            if (radio && btn) {
+                radio.addEventListener('change', function() {
+                    btn.disabled = !this.checked;
+                });
             }
         });
 
         // Daily Picks Functions
-        function generateDailyPicks() {
+        function openDailyPicksModal() {
             const modal = document.getElementById('daily-picks-modal');
             modal.classList.remove('hidden');
         }
@@ -571,37 +686,191 @@
             const results = document.getElementById('daily-picks-results');
             const error = document.getElementById('daily-picks-error');
             const btn = document.getElementById('daily-picks-btn');
+            const table = document.getElementById('daily-picks-table');
+            const details = document.getElementById('daily-picks-details');
+            const sentiment = document.getElementById('market-sentiment');
 
-            // Show loading state
+            // Show results container with loading indicator
+            results.classList.remove('hidden');
             loading.classList.remove('hidden');
-            results.classList.add('hidden');
             error.classList.add('hidden');
+
+            // Clear previous results
+            table.innerHTML = '';
+            details.innerHTML = '';
+            sentiment.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <svg class="animate-spin h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-slate-400 text-sm" id="progress-text">Starting analysis...</span>
+                </div>
+                <div class="text-slate-500 text-sm" id="progress-detail"></div>
+            `;
 
             // Disable button
             btn.disabled = true;
             btn.innerHTML = '<svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Generating...</span>';
 
-            fetch('/api/v1/daily-picks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(filters)
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.error) {
-                        throw new Error(data.error);
-                    }
-                    displayDailyPicks(data);
-                })
-                .catch(err => {
+            // Build query string from filters
+            const params = new URLSearchParams();
+            if (filters.min_price) params.append('min_price', filters.min_price);
+            if (filters.max_price) params.append('max_price', filters.max_price);
+            if (filters.min_market_cap) params.append('min_market_cap', filters.min_market_cap);
+            if (filters.max_market_cap) params.append('max_market_cap', filters.max_market_cap);
+            if (filters.min_pe) params.append('min_pe', filters.min_pe);
+            if (filters.max_pe) params.append('max_pe', filters.max_pe);
+            if (filters.min_confidence) params.append('min_confidence', filters.min_confidence);
+            if (filters.risk_levels) filters.risk_levels.forEach(r => params.append('risk_levels', r));
+            if (filters.time_horizons) filters.time_horizons.forEach(t => params.append('time_horizons', t));
+            if (filters.min_roe) params.append('min_roe', filters.min_roe);
+            if (filters.max_debt_to_equity) params.append('max_debt_to_equity', filters.max_debt_to_equity);
+
+            // Use Server-Sent Events for streaming
+            const url = '/api/v1/daily-picks/stream' + (params.toString() ? '?' + params.toString() : '');
+            const eventSource = new EventSource(url);
+            let pickCount = 0;
+
+            eventSource.onmessage = function(e) {
+                const event = JSON.parse(e.data);
+
+                switch (event.type) {
+                    case 'progress':
+                        document.getElementById('progress-text').textContent = event.message;
+                        if (event.total) {
+                            document.getElementById('progress-detail').textContent = 
+                                `Progress: ${event.progress || 0}/${event.total}`;
+                        }
+                        break;
+
+                    case 'pick':
+                        pickCount++;
+                        addPickToTable(event.pick);
+                        addPickDetails(event.pick);
+                        break;
+
+                    case 'complete':
+                        eventSource.close();
+                        loading.classList.add('hidden');
+                        
+                        // Update sentiment display
+                        const sentimentClass = event.market_sentiment === 'BULLISH' ? 'text-emerald-400' : 
+                                               event.market_sentiment === 'BEARISH' ? 'text-red-400' : 'text-slate-400';
+                        const sentimentIcon = event.market_sentiment === 'BULLISH' ? '↑' : 
+                                              event.market_sentiment === 'BEARISH' ? '↓' : '→';
+                        sentiment.innerHTML = `
+                            <div>
+                                <span class="text-slate-400 text-sm">Market Sentiment</span>
+                                <span class="ml-2 font-semibold ${sentimentClass}">${sentimentIcon} ${event.market_sentiment || 'NEUTRAL'}</span>
+                            </div>
+                            <div class="text-slate-500 text-sm">
+                                Found ${event.total_picks || pickCount} recommendations • Generated ${new Date().toLocaleTimeString()}
+                            </div>
+                        `;
+
+                        // Show empty state if no picks
+                        if (pickCount === 0) {
+                            table.innerHTML = `
+                                <tr>
+                                    <td colspan="10" class="py-12 text-center text-slate-400">
+                                        <svg class="w-12 h-12 mx-auto mb-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <p>No strong BUY recommendations found</p>
+                                        <p class="text-sm text-slate-500 mt-1">Try adjusting your filters</p>
+                                    </td>
+                                </tr>
+                            `;
+                        }
+
+                        btn.disabled = false;
+                        btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg><span>Daily Picks</span>';
+                        break;
+
+                    case 'error':
+                        eventSource.close();
+                        loading.classList.add('hidden');
+                        error.classList.remove('hidden');
+                        results.classList.add('hidden');
+                        document.getElementById('daily-picks-error-msg').textContent = event.message;
+                        btn.disabled = false;
+                        btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg><span>Daily Picks</span>';
+                        break;
+                }
+            };
+
+            eventSource.onerror = function() {
+                eventSource.close();
+                if (pickCount === 0) {
                     loading.classList.add('hidden');
                     error.classList.remove('hidden');
-                    document.getElementById('daily-picks-error-msg').textContent = err.message || 'Failed to generate picks';
-                })
-                .finally(() => {
-                    btn.disabled = false;
-                    btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg><span>Daily Picks</span>';
-                });
+                    document.getElementById('daily-picks-error-msg').textContent = 'Connection lost. Please try again.';
+                } else {
+                    // If we have some picks, just finish gracefully
+                    loading.classList.add('hidden');
+                }
+                btn.disabled = false;
+                btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg><span>Daily Picks</span>';
+            };
+        }
+
+        function addPickToTable(pick) {
+            const table = document.getElementById('daily-picks-table');
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-slate-800/30 transition cursor-pointer animate-fade-in';
+            row.onclick = () => togglePickDetails(pick.rank);
+            row.innerHTML = `
+                <td class="py-4 text-slate-500 font-mono">${pick.rank}</td>
+                <td class="py-4">
+                    <div class="font-semibold text-white">${pick.symbol}</div>
+                    <div class="text-slate-500 text-sm">${pick.name || ''}</div>
+                    ${pick.sector ? `<div class="text-slate-600 text-xs">${pick.sector}</div>` : ''}
+                </td>
+                <td class="py-4">
+                    <span class="px-2 py-1 rounded text-xs font-semibold ${pick.action === 'BUY' ? 'bg-emerald-500/20 text-emerald-400' : pick.action === 'SELL' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}">${pick.action}</span>
+                </td>
+                <td class="py-4 text-right font-mono text-white">₹${pick.entry_price.toFixed(2)}</td>
+                <td class="py-4 text-right font-mono text-emerald-400">₹${pick.target_price.toFixed(2)}</td>
+                <td class="py-4 text-right font-mono text-red-400">₹${pick.stop_loss.toFixed(2)}</td>
+                <td class="py-4 text-right font-mono text-slate-400 text-sm">${pick.market_cap ? formatNumber(pick.market_cap) : '-'}</td>
+                <td class="py-4 text-right font-mono text-slate-400 text-sm">${pick.pe ? pick.pe.toFixed(1) : '-'}</td>
+                <td class="py-4">
+                    <div class="flex items-center justify-center space-x-2">
+                        <div class="w-16 bg-slate-700/50 rounded-full h-2">
+                            <div class="h-2 rounded-full ${pick.confidence_score > 70 ? 'bg-emerald-500' : pick.confidence_score > 40 ? 'bg-amber-500' : 'bg-red-500'}" style="width: ${pick.confidence_score}%"></div>
+                        </div>
+                        <span class="text-slate-400 text-xs w-8">${pick.confidence_score.toFixed(0)}%</span>
+                    </div>
+                </td>
+                <td class="py-4">
+                    <span class="px-2 py-0.5 rounded text-xs ${pick.risk_level === 'low' ? 'bg-emerald-500/20 text-emerald-400' : pick.risk_level === 'high' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'} capitalize">${pick.risk_level}</span>
+                </td>
+            `;
+            table.appendChild(row);
+        }
+
+        function addPickDetails(pick) {
+            const details = document.getElementById('daily-picks-details');
+            const div = document.createElement('div');
+            div.id = `pick-details-${pick.rank}`;
+            div.className = 'hidden p-4 rounded-xl bg-slate-800/30 border border-slate-700/50 animate-fade-in';
+            div.innerHTML = `
+                <div class="flex items-start justify-between mb-3">
+                    <div>
+                        <h4 class="font-semibold text-white">${pick.symbol} - Analysis Details</h4>
+                        <span class="text-slate-500 text-sm">Risk Level: <span class="${pick.risk_level === 'low' ? 'text-emerald-400' : pick.risk_level === 'high' ? 'text-red-400' : 'text-amber-400'} capitalize">${pick.risk_level}</span></span>
+                    </div>
+                    ${pick.recommendation ? `<a href="/recommendation/${pick.recommendation.id}" class="text-emerald-400 hover:text-emerald-300 text-sm">View Full Analysis →</a>` : ''}
+                </div>
+                <p class="text-slate-300 text-sm leading-relaxed">${pick.reasoning}</p>
+                ${pick.sources && pick.sources.length > 0 ? `
+                <div class="mt-3 flex flex-wrap gap-2">
+                    ${pick.sources.map(s => `<span class="px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-400">${s}</span>`).join('')}
+                </div>
+                ` : ''}
+            `;
+            details.appendChild(div);
         }
 
         function displayDailyPicks(data) {

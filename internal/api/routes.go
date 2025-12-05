@@ -76,6 +76,7 @@ func (s *Server) setupRouter() {
 		// Daily Picks - AI-powered stock discovery
 		api.POST("/daily-picks", s.handleGenerateDailyPicks)
 		api.GET("/daily-picks", s.handleGetDailyPicks)
+		api.GET("/daily-picks/stream", s.handleStreamDailyPicks)
 		api.GET("/daily-picks/filters", s.handleGetDailyPicksFilters)
 
 		// Screener CSV upload
