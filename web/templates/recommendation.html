@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0a0f1a;
+            background-image: 
+                radial-gradient(ellipse at 20% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+            min-height: 100vh;
+        }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .card {
+            background: linear-gradient(135deg, #1a2234 0%, rgba(26, 34, 52, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="text-slate-100">
+    <!-- Navigation -->
+    <nav class="border-b border-slate-800/50 backdrop-blur-xl sticky top-0 z-50 bg-slate-900/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                        </div>
+                        <span class="text-xl font-semibold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">StockChef</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="/" class="text-slate-400 hover:text-slate-200 transition">Dashboard</a>
+                    <a href="/news" class="text-slate-400 hover:text-slate-200 transition">News</a>
+                    <a href="/upload" class="text-slate-400 hover:text-slate-200 transition">Upload</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Breadcrumb -->
+        <nav class="mb-6">
+            <a href="/" class="text-slate-400 hover:text-slate-200 transition">← Back to Dashboard</a>
+        </nav>
+
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+            <div>
+                <div class="flex items-center space-x-4 mb-2">
+                    <h1 class="text-3xl font-bold text-white">{{ .recommendation.Stock.Symbol }}</h1>
+                    {{ if eq .recommendation.Action "BUY" }}
+                    <span class="px-4 py-1.5 rounded-full text-sm font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">BUY</span>
+                    {{ else if eq .recommendation.Action "SELL" }}
+                    <span class="px-4 py-1.5 rounded-full text-sm font-semibold bg-red-500/20 text-red-400 border border-red-500/30">SELL</span>
+                    {{ else }}
+                    <span class="px-4 py-1.5 rounded-full text-sm font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">HOLD</span>
+                    {{ end }}
+                </div>
+                <p class="text-slate-400 text-lg">{{ .recommendation.Stock.Name }}</p>
+                {{ if .recommendation.Stock.Sector }}
+                <p class="text-slate-500 text-sm">{{ .recommendation.Stock.Sector }} {{ if .recommendation.Stock.Industry }}• {{ .recommendation.Stock.Industry }}{{ end }}</p>
+                {{ end }}
+            </div>
+            <div class="mt-4 md:mt-0 flex items-center space-x-2">
+                <span class="text-slate-500 text-sm">Confidence:</span>
+                <div class="flex items-center space-x-2">
+                    <div class="w-32 bg-slate-700/50 rounded-full h-3">
+                        <div class="h-3 rounded-full {{ if gt .recommendation.ConfidenceScore 70.0 }}bg-emerald-500{{ else if gt .recommendation.ConfidenceScore 40.0 }}bg-amber-500{{ else }}bg-red-500{{ end }}" style="width: {{ .recommendation.ConfidenceScore }}%"></div>
+                    </div>
+                    <span class="text-white font-semibold">{{ printf "%.0f" .recommendation.ConfidenceScore }}%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Content -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Price Levels -->
+                <div class="card rounded-xl p-6">
+                    <h2 class="text-lg font-semibold text-white mb-4">Price Levels</h2>
+                    <div class="grid grid-cols-3 gap-6">
+                        <div class="text-center p-4 rounded-lg bg-slate-800/50">
+                            <p class="text-slate-400 text-sm mb-1">Entry Price</p>
+                            <p class="text-2xl font-bold text-white font-mono">₹{{ printf "%.2f" .recommendation.EntryPrice }}</p>
+                        </div>
+                        <div class="text-center p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                            <p class="text-emerald-400 text-sm mb-1">Target Price</p>
+                            <p class="text-2xl font-bold text-emerald-400 font-mono">₹{{ printf "%.2f" .recommendation.TargetPrice }}</p>
+                            {{ if and (gt .recommendation.EntryPrice 0.0) (gt .recommendation.TargetPrice 0.0) }}
+                            <p class="text-emerald-500/70 text-xs mt-1">+{{ printf "%.1f" (mul (div (sub .recommendation.TargetPrice .recommendation.EntryPrice) .recommendation.EntryPrice) 100) }}%</p>
+                            {{ end }}
+                        </div>
+                        <div class="text-center p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                            <p class="text-red-400 text-sm mb-1">Stop Loss</p>
+                            <p class="text-2xl font-bold text-red-400 font-mono">₹{{ printf "%.2f" .recommendation.StopLoss }}</p>
+                            {{ if and (gt .recommendation.EntryPrice 0.0) (gt .recommendation.StopLoss 0.0) }}
+                            <p class="text-red-500/70 text-xs mt-1">{{ printf "%.1f" (mul (div (sub .recommendation.StopLoss .recommendation.EntryPrice) .recommendation.EntryPrice) 100) }}%</p>
+                            {{ end }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reasoning -->
+                <div class="card rounded-xl p-6">
+                    <h2 class="text-lg font-semibold text-white mb-4">Analysis & Reasoning</h2>
+                    <div class="prose prose-invert max-w-none">
+                        <p class="text-slate-300 leading-relaxed">{{ .recommendation.Reasoning }}</p>
+                    </div>
+                    {{ if .recommendation.LLMReasoning }}
+                    <div class="mt-6 pt-6 border-t border-slate-700/50">
+                        <h3 class="text-sm font-semibold text-slate-400 mb-3 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                            </svg>
+                            AI Analysis
+                        </h3>
+                        <p class="text-slate-300 leading-relaxed">{{ .recommendation.LLMReasoning }}</p>
+                    </div>
+                    {{ end }}
+                </div>
+
+                <!-- Related News -->
+                {{ if .news }}
+                <div class="card rounded-xl p-6">
+                    <h2 class="text-lg font-semibold text-white mb-4">Related News</h2>
+                    <div class="space-y-4">
+                        {{ range .news }}
+                        <div class="p-4 rounded-lg bg-slate-800/30 hover:bg-slate-800/50 transition">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h3 class="text-white font-medium mb-1">{{ .Title }}</h3>
+                                    <p class="text-slate-400 text-sm line-clamp-2">{{ .Description }}</p>
+                                    <div class="flex items-center space-x-3 mt-2">
+                                        <span class="text-slate-500 text-xs">{{ .Source }}</span>
+                                        {{ if eq .Sentiment "BULLISH" }}
+                                        <span class="px-2 py-0.5 rounded text-xs bg-emerald-500/20 text-emerald-400">Bullish</span>
+                                        {{ else if eq .Sentiment "BEARISH" }}
+                                        <span class="px-2 py-0.5 rounded text-xs bg-red-500/20 text-red-400">Bearish</span>
+                                        {{ else }}
+                                        <span class="px-2 py-0.5 rounded text-xs bg-slate-500/20 text-slate-400">Neutral</span>
+                                        {{ end }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{ end }}
+                    </div>
+                </div>
+                {{ end }}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Details Card -->
+                <div class="card rounded-xl p-6">
+                    <h2 class="text-lg font-semibold text-white mb-4">Details</h2>
+                    <dl class="space-y-4">
+                        <div class="flex justify-between">
+                            <dt class="text-slate-400">Time Horizon</dt>
+                            <dd class="text-white font-medium capitalize">{{ .recommendation.TimeHorizon }}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-slate-400">Risk Level</dt>
+                            <dd class="font-medium capitalize {{ if eq .recommendation.RiskLevel "low" }}text-emerald-400{{ else if eq .recommendation.RiskLevel "high" }}text-red-400{{ else }}text-amber-400{{ end }}">{{ .recommendation.RiskLevel }}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-slate-400">Status</dt>
+                            <dd class="font-medium {{ if .recommendation.IsActive }}text-emerald-400{{ else }}text-slate-500{{ end }}">{{ if .recommendation.IsActive }}Active{{ else }}Expired{{ end }}</dd>
+                        </div>
+                        {{ if .recommendation.ExpiresAt }}
+                        <div class="flex justify-between">
+                            <dt class="text-slate-400">Expires</dt>
+                            <dd class="text-white font-medium">{{ .recommendation.ExpiresAt.Format "Jan 02, 2006" }}</dd>
+                        </div>
+                        {{ end }}
+                        <div class="flex justify-between">
+                            <dt class="text-slate-400">Created</dt>
+                            <dd class="text-white font-medium">{{ .recommendation.CreatedAt.Format "Jan 02, 2006" }}</dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <!-- Fundamentals Card -->
+                {{ if .fundamental }}
+                <div class="card rounded-xl p-6">
+                    <h2 class="text-lg font-semibold text-white mb-4">Fundamentals</h2>
+                    <dl class="space-y-3 text-sm">
+                        {{ if gt .fundamental.MarketCap 0.0 }}
+                        <div class="flex justify-between">
+                            <dt class="text-slate-400">Market Cap</dt>
+                            <dd class="text-white font-mono">₹{{ printf "%.0f" .fundamental.MarketCap }} Cr</dd>
+                        </div>
+                        {{ end }}
+                        {{ if gt .fundamental.StockPE 0.0 }}
+                        <div class="flex justify-between">
+                            <dt class="text-slate-400">P/E Ratio</dt>
+                            <dd class="text-white font-mono">{{ printf "%.2f" .fundamental.StockPE }}</dd>
+                        </div>
+                        {{ end }}
+                        {{ if gt .fundamental.ROE 0.0 }}
+                        <div class="flex justify-between">
+                            <dt class="text-slate-400">ROE</dt>
+                            <dd class="text-white font-mono">{{ printf "%.1f" .fundamental.ROE }}%</dd>
+                        </div>
+                        {{ end }}
+                        {{ if gt .fundamental.ROCE 0.0 }}
+                        <div class="flex justify-between">
+                            <dt class="text-slate-400">ROCE</dt>
+                            <dd class="text-white font-mono">{{ printf "%.1f" .fundamental.ROCE }}%</dd>
+                        </div>
+                        {{ end }}
+                        {{ if gt .fundamental.DebtToEquity 0.0 }}
+                        <div class="flex justify-between">
+                            <dt class="text-slate-400">Debt/Equity</dt>
+                            <dd class="text-white font-mono">{{ printf "%.2f" .fundamental.DebtToEquity }}</dd>
+                        </div>
+                        {{ end }}
+                        {{ if gt .fundamental.DividendYield 0.0 }}
+                        <div class="flex justify-between">
+                            <dt class="text-slate-400">Dividend Yield</dt>
+                            <dd class="text-white font-mono">{{ printf "%.2f" .fundamental.DividendYield }}%</dd>
+                        </div>
+                        {{ end }}
+                        {{ if gt .fundamental.PromoterHolding 0.0 }}
+                        <div class="flex justify-between">
+                            <dt class="text-slate-400">Promoter Holding</dt>
+                            <dd class="text-white font-mono">{{ printf "%.1f" .fundamental.PromoterHolding }}%</dd>
+                        </div>
+                        {{ end }}
+                        {{ if and (gt .fundamental.High52Week 0.0) (gt .fundamental.Low52Week 0.0) }}
+                        <div class="pt-3 border-t border-slate-700/50">
+                            <p class="text-slate-400 text-xs mb-2">52 Week Range</p>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-red-400 font-mono">₹{{ printf "%.0f" .fundamental.Low52Week }}</span>
+                                <span class="text-emerald-400 font-mono">₹{{ printf "%.0f" .fundamental.High52Week }}</span>
+                            </div>
+                            <div class="w-full bg-slate-700/50 rounded-full h-2 mt-2">
+                                {{ $range := sub .fundamental.High52Week .fundamental.Low52Week }}
+                                {{ $position := div (sub .fundamental.CurrentPrice .fundamental.Low52Week) $range }}
+                                <div class="h-2 rounded-full bg-gradient-to-r from-red-500 via-amber-500 to-emerald-500" style="width: 100%">
+                                    <div class="relative">
+                                        <div class="absolute w-3 h-3 bg-white rounded-full -top-0.5 shadow-lg" style="left: calc({{ mul $position 100 }}% - 6px)"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{ end }}
+                    </dl>
+                </div>
+                {{ end }}
+
+                <!-- Data Sources -->
+                <div class="card rounded-xl p-6">
+                    <h2 class="text-lg font-semibold text-white mb-4">Data Sources</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 rounded-full text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30">News RSS</span>
+                        <span class="px-3 py-1 rounded-full text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30">Screener.in</span>
+                        <span class="px-3 py-1 rounded-full text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Sentiment Analysis</span>
+                        {{ if .recommendation.LLMReasoning }}
+                        <span class="px-3 py-1 rounded-full text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30">AI Analysis</span>
+                        {{ end }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
+

@@ -1,0 +1,54 @@
+# Stock Recommender Configuration
+# Secrets should be set via environment variables or .env file
+# DO NOT commit secrets to this file
+
+app:
+  env: ${APP_ENV:development}
+  log_level: ${LOG_LEVEL:debug}
+
+database:
+  # Database credentials should come from environment variables
+  host: ${DB_HOST:localhost}
+  port: ${DB_PORT:5432}
+  user: ${DB_USER:postgres}
+  password: ${DB_PASSWORD}
+  dbname: ${DB_NAME:stock_recommender}
+  sslmode: ${DB_SSLMODE:disable}
+  max_open_conns: 25
+  max_idle_conns: 5
+  conn_max_lifetime: 5m
+
+server:
+  port: ${SERVER_PORT:8080}
+  read_timeout: 30s
+  write_timeout: 30s
+
+llm:
+  provider: ${LLM_PROVIDER:ollama}
+  ollama:
+    url: ${OLLAMA_URL:http://localhost:11434}
+    model: ${OLLAMA_MODEL:llama2}
+  openai:
+    # Set OPENAI_API_KEY in .env file
+    api_key: ${OPENAI_API_KEY}
+    model: ${OPENAI_MODEL:gpt-4o-mini}
+  gemini:
+    # Set GEMINI_API_KEY in .env file
+    api_key: ${GEMINI_API_KEY}
+    model: ${GEMINI_MODEL:gemini-pro}
+
+analysis:
+  use_llm: ${USE_LLM:true}
+  use_keyword_sentiment: ${USE_KEYWORD_SENTIMENT:true}
+
+news:
+  fetch_interval: 15m
+  sources:
+    - https://www.moneycontrol.com/rss/latestnews.xml
+    - https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms
+
+screener:
+  base_url: https://www.screener.in
+  scrape_enabled: true
+  scrape_delay: 3s
+

@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0f1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a2234;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-amber: #f59e0b;
+            --accent-blue: #3b82f6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            background-image: 
+                radial-gradient(ellipse at 20% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+            min-height: 100vh;
+        }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .card {
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(26, 34, 52, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+        }
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        .glow-green { box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+        .glow-red { box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
+        .glow-amber { box-shadow: 0 0 20px rgba(245, 158, 11, 0.3); }
+        .animate-pulse-slow { animation: pulse 3s infinite; }
+        .stock-ticker {
+            background: linear-gradient(90deg, transparent, var(--bg-secondary), transparent);
+        }
+    </style>
+</head>
+<body class="text-slate-100">
+    <!-- Navigation -->
+    <nav class="border-b border-slate-800/50 backdrop-blur-xl sticky top-0 z-50 bg-slate-900/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                        </div>
+                        <span class="text-xl font-semibold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">StockChef</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="/" class="text-emerald-400 font-medium">Dashboard</a>
+                    <a href="/news" class="text-slate-400 hover:text-slate-200 transition">News</a>
+                    <a href="/upload" class="text-slate-400 hover:text-slate-200 transition">Upload</a>
+                    <button onclick="openAnalyzeModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition">
+                        Analyze Stock
+                    </button>
+                    <button onclick="generateDailyPicks()" id="daily-picks-btn" class="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 rounded-lg font-medium transition shadow-lg shadow-amber-500/20 flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        <span>Daily Picks</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-white mb-2">Stock Recommendations</h1>
+            <p class="text-slate-400">AI-powered analysis for Indian markets based on news, fundamentals, and market conditions</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="card rounded-xl p-5 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-400 text-sm">Total Recommendations</p>
+                        <p class="text-2xl font-bold text-white mt-1">{{ len .recommendations }}</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="card rounded-xl p-5 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-400 text-sm">Buy Signals</p>
+                        <p class="text-2xl font-bold text-emerald-400 mt-1" id="buy-count">-</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="card rounded-xl p-5 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-400 text-sm">Sell Signals</p>
+                        <p class="text-2xl font-bold text-red-400 mt-1" id="sell-count">-</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div class="card rounded-xl p-5 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-400 text-sm">Hold Signals</p>
+                        <p class="text-2xl font-bold text-amber-400 mt-1" id="hold-count">-</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {{ range .recommendations }}
+            <a href="/recommendation/{{ .ID }}" class="card rounded-xl p-6 transition-all duration-300 hover:scale-[1.02] cursor-pointer group">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white group-hover:text-emerald-400 transition">{{ .Stock.Symbol }}</h3>
+                        <p class="text-slate-400 text-sm">{{ .Stock.Name }}</p>
+                    </div>
+                    {{ if eq .Action "BUY" }}
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">BUY</span>
+                    {{ else if eq .Action "SELL" }}
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-400 border border-red-500/30">SELL</span>
+                    {{ else }}
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30">HOLD</span>
+                    {{ end }}
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <p class="text-slate-500 text-xs uppercase tracking-wide">Entry</p>
+                        <p class="text-white font-mono font-medium">₹{{ printf "%.2f" .EntryPrice }}</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 text-xs uppercase tracking-wide">Target</p>
+                        <p class="text-emerald-400 font-mono font-medium">₹{{ printf "%.2f" .TargetPrice }}</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 text-xs uppercase tracking-wide">Stop Loss</p>
+                        <p class="text-red-400 font-mono font-medium">₹{{ printf "%.2f" .StopLoss }}</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-full bg-slate-700/50 rounded-full h-2 w-24">
+                            <div class="h-2 rounded-full {{ if gt .ConfidenceScore 70.0 }}bg-emerald-500{{ else if gt .ConfidenceScore 40.0 }}bg-amber-500{{ else }}bg-red-500{{ end }}" style="width: {{ .ConfidenceScore }}%"></div>
+                        </div>
+                        <span class="text-slate-400 text-xs">{{ printf "%.0f" .ConfidenceScore }}%</span>
+                    </div>
+                    <span class="text-slate-500 text-xs">{{ .TimeHorizon }}</span>
+                </div>
+            </a>
+            {{ else }}
+            <div class="col-span-full card rounded-xl p-12 text-center">
+                <svg class="w-16 h-16 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <h3 class="text-xl font-semibold text-white mb-2">No Recommendations Yet</h3>
+                <p class="text-slate-400 mb-6">Start by analyzing a stock to get AI-powered recommendations</p>
+                <button onclick="openAnalyzeModal()" class="px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 rounded-lg font-medium transition shadow-lg shadow-emerald-500/20">
+                    Analyze Your First Stock
+                </button>
+            </div>
+            {{ end }}
+        </div>
+    </main>
+
+    <!-- Daily Picks Modal -->
+    <div id="daily-picks-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 overflow-y-auto">
+        <div class="min-h-screen px-4 py-8 flex items-start justify-center">
+            <div class="card rounded-2xl p-8 max-w-5xl w-full transform transition-all">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
+                            <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                            <span>Today's Top 10 Stock Picks</span>
+                        </h2>
+                        <p class="text-slate-400 mt-1">AI-powered recommendations based on news, fundamentals & market analysis</p>
+                    </div>
+                    <button onclick="closeDailyPicksModal()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition">
+                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Filters Section -->
+                <div id="daily-picks-filters" class="mb-6 p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-semibold text-slate-300 flex items-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                            </svg>
+                            <span>Filters</span>
+                        </h3>
+                        <button onclick="resetFilters()" class="text-xs text-slate-500 hover:text-slate-300 transition">Reset All</button>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <!-- Price Range -->
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Price Range (₹)</label>
+                            <div class="flex space-x-2">
+                                <input type="number" id="filter-min-price" placeholder="Min" class="w-full px-2 py-1.5 bg-slate-900/50 border border-slate-700 rounded text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500">
+                                <input type="number" id="filter-max-price" placeholder="Max" class="w-full px-2 py-1.5 bg-slate-900/50 border border-slate-700 rounded text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500">
+                            </div>
+                        </div>
+
+                        <!-- Market Cap -->
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Market Cap (Cr)</label>
+                            <select id="filter-market-cap" class="w-full px-2 py-1.5 bg-slate-900/50 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-amber-500">
+                                <option value="">Any</option>
+                                <option value="0-5000">Small Cap (&lt; ₹5,000 Cr)</option>
+                                <option value="5000-20000">Mid Cap (₹5,000 - ₹20,000 Cr)</option>
+                                <option value="20000-0">Large Cap (&gt; ₹20,000 Cr)</option>
+                            </select>
+                        </div>
+
+                        <!-- P/E Ratio -->
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">P/E Ratio</label>
+                            <div class="flex space-x-2">
+                                <input type="number" id="filter-min-pe" placeholder="Min" class="w-full px-2 py-1.5 bg-slate-900/50 border border-slate-700 rounded text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500">
+                                <input type="number" id="filter-max-pe" placeholder="Max" class="w-full px-2 py-1.5 bg-slate-900/50 border border-slate-700 rounded text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500">
+                            </div>
+                        </div>
+
+                        <!-- Min Confidence -->
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Min Confidence (%)</label>
+                            <input type="number" id="filter-min-confidence" placeholder="e.g., 50" min="0" max="100" class="w-full px-2 py-1.5 bg-slate-900/50 border border-slate-700 rounded text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500">
+                        </div>
+
+                        <!-- Risk Level -->
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Risk Level</label>
+                            <div class="flex space-x-2">
+                                <label class="flex items-center space-x-1 cursor-pointer">
+                                    <input type="checkbox" id="filter-risk-low" class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500">
+                                    <span class="text-xs text-emerald-400">Low</span>
+                                </label>
+                                <label class="flex items-center space-x-1 cursor-pointer">
+                                    <input type="checkbox" id="filter-risk-medium" class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500">
+                                    <span class="text-xs text-amber-400">Med</span>
+                                </label>
+                                <label class="flex items-center space-x-1 cursor-pointer">
+                                    <input type="checkbox" id="filter-risk-high" class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500">
+                                    <span class="text-xs text-red-400">High</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Time Horizon -->
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Time Horizon</label>
+                            <div class="flex space-x-2">
+                                <label class="flex items-center space-x-1 cursor-pointer">
+                                    <input type="checkbox" id="filter-horizon-short" class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500">
+                                    <span class="text-xs text-slate-400">Short</span>
+                                </label>
+                                <label class="flex items-center space-x-1 cursor-pointer">
+                                    <input type="checkbox" id="filter-horizon-medium" class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500">
+                                    <span class="text-xs text-slate-400">Med</span>
+                                </label>
+                                <label class="flex items-center space-x-1 cursor-pointer">
+                                    <input type="checkbox" id="filter-horizon-long" class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-amber-500">
+                                    <span class="text-xs text-slate-400">Long</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Min ROE -->
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Min ROE (%)</label>
+                            <input type="number" id="filter-min-roe" placeholder="e.g., 15" class="w-full px-2 py-1.5 bg-slate-900/50 border border-slate-700 rounded text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500">
+                        </div>
+
+                        <!-- Max Debt/Equity -->
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">Max Debt/Equity</label>
+                            <input type="number" id="filter-max-de" placeholder="e.g., 1.0" step="0.1" class="w-full px-2 py-1.5 bg-slate-900/50 border border-slate-700 rounded text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500">
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex justify-end">
+                        <button onclick="applyFiltersAndGenerate()" class="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-500 hover:to-orange-400 rounded-lg text-sm font-medium transition shadow-lg shadow-amber-500/20">
+                            Generate with Filters
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="daily-picks-loading" class="hidden py-12 text-center">
+                    <div class="inline-flex items-center space-x-3">
+                        <svg class="animate-spin h-8 w-8 text-amber-400" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-slate-300 text-lg">Scanning markets & analyzing stocks...</span>
+                    </div>
+                    <p class="text-slate-500 mt-3 text-sm">This may take a minute as we analyze multiple sources</p>
+                </div>
+
+                <!-- Results -->
+                <div id="daily-picks-results" class="hidden">
+                    <!-- Market Sentiment -->
+                    <div id="market-sentiment" class="mb-6 p-4 rounded-xl bg-slate-800/50 flex items-center justify-between"></div>
+
+                    <!-- Picks Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="text-left text-slate-400 text-sm border-b border-slate-700/50">
+                                    <th class="pb-3 font-medium">#</th>
+                                    <th class="pb-3 font-medium">Stock</th>
+                                    <th class="pb-3 font-medium">Action</th>
+                                    <th class="pb-3 font-medium text-right">Entry</th>
+                                    <th class="pb-3 font-medium text-right">Target</th>
+                                    <th class="pb-3 font-medium text-right">Stop Loss</th>
+                                    <th class="pb-3 font-medium text-right">M.Cap (Cr)</th>
+                                    <th class="pb-3 font-medium text-right">P/E</th>
+                                    <th class="pb-3 font-medium text-center">Confidence</th>
+                                    <th class="pb-3 font-medium">Risk</th>
+                                </tr>
+                            </thead>
+                            <tbody id="daily-picks-table" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Detailed Reasoning (expandable) -->
+                    <div id="daily-picks-details" class="mt-6 space-y-4"></div>
+                </div>
+
+                <!-- Error State -->
+                <div id="daily-picks-error" class="hidden py-12 text-center">
+                    <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <p class="text-red-400 font-medium" id="daily-picks-error-msg">Failed to generate picks</p>
+                    <button onclick="generateDailyPicks()" class="mt-4 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition">
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analyze Modal -->
+    <div id="analyze-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center">
+        <div class="card rounded-2xl p-8 max-w-md w-full mx-4 transform transition-all">
+            <h2 class="text-2xl font-bold text-white mb-2">Analyze Stock</h2>
+            <p class="text-slate-400 mb-6">Enter a stock symbol to get AI-powered analysis and recommendations</p>
+            
+            <form id="analyze-form" onsubmit="analyzeStock(event)">
+                <div class="mb-6">
+                    <label class="block text-slate-300 text-sm font-medium mb-2">Stock Symbol</label>
+                    <input type="text" id="symbol-input" placeholder="e.g., RELIANCE, TCS, INFY" 
+                           class="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition uppercase font-mono">
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeAnalyzeModal()" class="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition">
+                        Cancel
+                    </button>
+                    <button type="submit" id="analyze-btn" class="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 rounded-lg font-medium transition shadow-lg shadow-emerald-500/20">
+                        Analyze
+                    </button>
+                </div>
+            </form>
+            
+            <div id="analyze-result" class="hidden mt-6 p-4 rounded-lg bg-slate-800/50"></div>
+        </div>
+    </div>
+
+    <script>
+        // Count recommendations by action
+        document.addEventListener('DOMContentLoaded', function() {
+            const recommendations = {{ .recommendations }};
+            let buyCount = 0, sellCount = 0, holdCount = 0;
+            
+            if (recommendations) {
+                recommendations.forEach(r => {
+                    if (r.action === 'BUY') buyCount++;
+                    else if (r.action === 'SELL') sellCount++;
+                    else holdCount++;
+                });
+            }
+            
+            document.getElementById('buy-count').textContent = buyCount;
+            document.getElementById('sell-count').textContent = sellCount;
+            document.getElementById('hold-count').textContent = holdCount;
+        });
+
+        function openAnalyzeModal() {
+            document.getElementById('analyze-modal').classList.remove('hidden');
+            document.getElementById('symbol-input').focus();
+        }
+
+        function closeAnalyzeModal() {
+            document.getElementById('analyze-modal').classList.add('hidden');
+            document.getElementById('analyze-result').classList.add('hidden');
+        }
+
+        async function analyzeStock(e) {
+            e.preventDefault();
+            const symbol = document.getElementById('symbol-input').value.trim().toUpperCase();
+            if (!symbol) return;
+
+            const btn = document.getElementById('analyze-btn');
+            const resultDiv = document.getElementById('analyze-result');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+            try {
+                const response = await fetch('/api/v1/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ symbol })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-emerald-400 font-semibold">Analysis Complete!</span>
+                            <span class="px-2 py-1 rounded text-xs font-semibold ${data.recommendation.action === 'BUY' ? 'bg-emerald-500/20 text-emerald-400' : data.recommendation.action === 'SELL' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}">${data.recommendation.action}</span>
+                        </div>
+                        <p class="text-slate-300 text-sm">${data.recommendation.reasoning.substring(0, 200)}...</p>
+                        <a href="/recommendation/${data.recommendation.id}" class="mt-3 inline-block text-emerald-400 hover:text-emerald-300 text-sm font-medium">View Full Analysis →</a>
+                    `;
+                    resultDiv.classList.remove('hidden');
+                } else {
+                    resultDiv.innerHTML = `<p class="text-red-400">${data.error || 'Analysis failed'}</p>`;
+                    resultDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<p class="text-red-400">Network error. Please try again.</p>`;
+                resultDiv.classList.remove('hidden');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Analyze';
+        }
+
+        // Close modal on escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAnalyzeModal();
+                closeDailyPicksModal();
+            }
+        });
+
+        // Daily Picks Functions
+        function generateDailyPicks() {
+            const modal = document.getElementById('daily-picks-modal');
+            modal.classList.remove('hidden');
+        }
+
+        function getFilters() {
+            const filters = {};
+
+            // Price
+            const minPrice = parseFloat(document.getElementById('filter-min-price').value);
+            const maxPrice = parseFloat(document.getElementById('filter-max-price').value);
+            if (minPrice > 0) filters.min_price = minPrice;
+            if (maxPrice > 0) filters.max_price = maxPrice;
+
+            // Market Cap
+            const marketCap = document.getElementById('filter-market-cap').value;
+            if (marketCap) {
+                const [min, max] = marketCap.split('-').map(Number);
+                if (min > 0) filters.min_market_cap = min;
+                if (max > 0) filters.max_market_cap = max;
+            }
+
+            // P/E
+            const minPE = parseFloat(document.getElementById('filter-min-pe').value);
+            const maxPE = parseFloat(document.getElementById('filter-max-pe').value);
+            if (minPE > 0) filters.min_pe = minPE;
+            if (maxPE > 0) filters.max_pe = maxPE;
+
+            // Confidence
+            const minConfidence = parseFloat(document.getElementById('filter-min-confidence').value);
+            if (minConfidence > 0) filters.min_confidence = minConfidence;
+
+            // Risk Levels
+            const riskLevels = [];
+            if (document.getElementById('filter-risk-low').checked) riskLevels.push('low');
+            if (document.getElementById('filter-risk-medium').checked) riskLevels.push('medium');
+            if (document.getElementById('filter-risk-high').checked) riskLevels.push('high');
+            if (riskLevels.length > 0) filters.risk_levels = riskLevels;
+
+            // Time Horizons
+            const timeHorizons = [];
+            if (document.getElementById('filter-horizon-short').checked) timeHorizons.push('short_term');
+            if (document.getElementById('filter-horizon-medium').checked) timeHorizons.push('medium_term');
+            if (document.getElementById('filter-horizon-long').checked) timeHorizons.push('long_term');
+            if (timeHorizons.length > 0) filters.time_horizons = timeHorizons;
+
+            // ROE
+            const minROE = parseFloat(document.getElementById('filter-min-roe').value);
+            if (minROE > 0) filters.min_roe = minROE;
+
+            // Debt/Equity
+            const maxDE = parseFloat(document.getElementById('filter-max-de').value);
+            if (maxDE > 0) filters.max_debt_to_equity = maxDE;
+
+            return filters;
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-min-price').value = '';
+            document.getElementById('filter-max-price').value = '';
+            document.getElementById('filter-market-cap').value = '';
+            document.getElementById('filter-min-pe').value = '';
+            document.getElementById('filter-max-pe').value = '';
+            document.getElementById('filter-min-confidence').value = '';
+            document.getElementById('filter-risk-low').checked = false;
+            document.getElementById('filter-risk-medium').checked = false;
+            document.getElementById('filter-risk-high').checked = false;
+            document.getElementById('filter-horizon-short').checked = false;
+            document.getElementById('filter-horizon-medium').checked = false;
+            document.getElementById('filter-horizon-long').checked = false;
+            document.getElementById('filter-min-roe').value = '';
+            document.getElementById('filter-max-de').value = '';
+        }
+
+        function applyFiltersAndGenerate() {
+            const filters = getFilters();
+            const loading = document.getElementById('daily-picks-loading');
+            const results = document.getElementById('daily-picks-results');
+            const error = document.getElementById('daily-picks-error');
+            const btn = document.getElementById('daily-picks-btn');
+
+            // Show loading state
+            loading.classList.remove('hidden');
+            results.classList.add('hidden');
+            error.classList.add('hidden');
+
+            // Disable button
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Generating...</span>';
+
+            fetch('/api/v1/daily-picks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(filters)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    displayDailyPicks(data);
+                })
+                .catch(err => {
+                    loading.classList.add('hidden');
+                    error.classList.remove('hidden');
+                    document.getElementById('daily-picks-error-msg').textContent = err.message || 'Failed to generate picks';
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg><span>Daily Picks</span>';
+                });
+        }
+
+        function displayDailyPicks(data) {
+            const loading = document.getElementById('daily-picks-loading');
+            const results = document.getElementById('daily-picks-results');
+            const table = document.getElementById('daily-picks-table');
+            const details = document.getElementById('daily-picks-details');
+            const sentiment = document.getElementById('market-sentiment');
+
+            loading.classList.add('hidden');
+            results.classList.remove('hidden');
+
+            // Market sentiment
+            const sentimentClass = data.market_sentiment === 'BULLISH' ? 'text-emerald-400' : 
+                                   data.market_sentiment === 'BEARISH' ? 'text-red-400' : 'text-slate-400';
+            const sentimentIcon = data.market_sentiment === 'BULLISH' ? '↑' : 
+                                  data.market_sentiment === 'BEARISH' ? '↓' : '→';
+            sentiment.innerHTML = `
+                <div>
+                    <span class="text-slate-400 text-sm">Market Sentiment</span>
+                    <span class="ml-2 font-semibold ${sentimentClass}">${sentimentIcon} ${data.market_sentiment}</span>
+                </div>
+                <div class="text-slate-500 text-sm">
+                    Analyzed ${data.total_analyzed} stocks • Generated ${new Date(data.generated_at).toLocaleTimeString()}
+                </div>
+            `;
+
+            // Table rows
+            if (data.picks && data.picks.length > 0) {
+                table.innerHTML = data.picks.map(pick => `
+                    <tr class="hover:bg-slate-800/30 transition cursor-pointer" onclick="togglePickDetails(${pick.rank})">
+                        <td class="py-4 text-slate-500 font-mono">${pick.rank}</td>
+                        <td class="py-4">
+                            <div class="font-semibold text-white">${pick.symbol}</div>
+                            <div class="text-slate-500 text-sm">${pick.name || ''}</div>
+                            ${pick.sector ? `<div class="text-slate-600 text-xs">${pick.sector}</div>` : ''}
+                        </td>
+                        <td class="py-4">
+                            <span class="px-2 py-1 rounded text-xs font-semibold ${pick.action === 'BUY' ? 'bg-emerald-500/20 text-emerald-400' : pick.action === 'SELL' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}">${pick.action}</span>
+                        </td>
+                        <td class="py-4 text-right font-mono text-white">₹${pick.entry_price.toFixed(2)}</td>
+                        <td class="py-4 text-right font-mono text-emerald-400">₹${pick.target_price.toFixed(2)}</td>
+                        <td class="py-4 text-right font-mono text-red-400">₹${pick.stop_loss.toFixed(2)}</td>
+                        <td class="py-4 text-right font-mono text-slate-400 text-sm">${pick.market_cap ? formatNumber(pick.market_cap) : '-'}</td>
+                        <td class="py-4 text-right font-mono text-slate-400 text-sm">${pick.pe ? pick.pe.toFixed(1) : '-'}</td>
+                        <td class="py-4">
+                            <div class="flex items-center justify-center space-x-2">
+                                <div class="w-16 bg-slate-700/50 rounded-full h-2">
+                                    <div class="h-2 rounded-full ${pick.confidence_score > 70 ? 'bg-emerald-500' : pick.confidence_score > 40 ? 'bg-amber-500' : 'bg-red-500'}" style="width: ${pick.confidence_score}%"></div>
+                                </div>
+                                <span class="text-slate-400 text-xs w-8">${pick.confidence_score.toFixed(0)}%</span>
+                            </div>
+                        </td>
+                        <td class="py-4">
+                            <span class="px-2 py-0.5 rounded text-xs ${pick.risk_level === 'low' ? 'bg-emerald-500/20 text-emerald-400' : pick.risk_level === 'high' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'} capitalize">${pick.risk_level}</span>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Details sections
+                details.innerHTML = data.picks.map(pick => `
+                    <div id="pick-details-${pick.rank}" class="hidden p-4 rounded-xl bg-slate-800/30 border border-slate-700/50">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <h4 class="font-semibold text-white">${pick.symbol} - Analysis Details</h4>
+                                <span class="text-slate-500 text-sm">Risk Level: <span class="${pick.risk_level === 'low' ? 'text-emerald-400' : pick.risk_level === 'high' ? 'text-red-400' : 'text-amber-400'} capitalize">${pick.risk_level}</span></span>
+                            </div>
+                            ${pick.recommendation ? `<a href="/recommendation/${pick.recommendation.id}" class="text-emerald-400 hover:text-emerald-300 text-sm">View Full Analysis →</a>` : ''}
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed">${pick.reasoning}</p>
+                        ${pick.sources && pick.sources.length > 0 ? `
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            ${pick.sources.map(s => `<span class="px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-400">${s}</span>`).join('')}
+                        </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+            } else {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="py-12 text-center text-slate-400">
+                            <svg class="w-12 h-12 mx-auto mb-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <p>No strong BUY recommendations found today</p>
+                            <p class="text-sm text-slate-500 mt-1">Market conditions may not favor buying at this time</p>
+                        </td>
+                    </tr>
+                `;
+                details.innerHTML = '';
+            }
+        }
+
+        function togglePickDetails(rank) {
+            const details = document.getElementById(`pick-details-${rank}`);
+            if (details) {
+                details.classList.toggle('hidden');
+            }
+        }
+
+        function closeDailyPicksModal() {
+            document.getElementById('daily-picks-modal').classList.add('hidden');
+        }
+
+        function formatNumber(num) {
+            if (num >= 100000) {
+                return (num / 100000).toFixed(1) + 'L';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toFixed(0);
+        }
+    </script>
+</body>
+</html>
+

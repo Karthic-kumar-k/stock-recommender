@@ -1,0 +1,58 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.html
+
+# Dependency directories
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment and secrets - NEVER COMMIT THESE
+.env
+.env.local
+.env.*.local
+*.env
+
+# Config with secrets
+configs/config.local.yaml
+configs/config.prod.yaml
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+
+# Database
+*.db
+*.sqlite
+
+# Uploads
+uploads/
+
+# Build artifacts
+dist/
+build/
+

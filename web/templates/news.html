@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0a0f1a;
+            background-image: 
+                radial-gradient(ellipse at 20% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+            min-height: 100vh;
+        }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .card {
+            background: linear-gradient(135deg, #1a2234 0%, rgba(26, 34, 52, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="text-slate-100">
+    <!-- Navigation -->
+    <nav class="border-b border-slate-800/50 backdrop-blur-xl sticky top-0 z-50 bg-slate-900/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                        </div>
+                        <span class="text-xl font-semibold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">StockChef</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="/" class="text-slate-400 hover:text-slate-200 transition">Dashboard</a>
+                    <a href="/news" class="text-emerald-400 font-medium">News</a>
+                    <a href="/upload" class="text-slate-400 hover:text-slate-200 transition">Upload</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-white mb-2">Market News</h1>
+                <p class="text-slate-400">Latest financial news with sentiment analysis</p>
+            </div>
+            <button onclick="refreshNews()" id="refresh-btn" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 rounded-lg font-medium transition shadow-lg shadow-blue-500/20 flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span>Refresh</span>
+            </button>
+        </div>
+
+        <!-- Sentiment Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="card rounded-xl p-5">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-slate-400 text-sm">Bullish News</p>
+                        <p class="text-xl font-bold text-emerald-400" id="bullish-count">-</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card rounded-xl p-5">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-slate-400 text-sm">Bearish News</p>
+                        <p class="text-xl font-bold text-red-400" id="bearish-count">-</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card rounded-xl p-5">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-slate-500/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-slate-400 text-sm">Neutral News</p>
+                        <p class="text-xl font-bold text-slate-400" id="neutral-count">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- News List -->
+        <div class="space-y-4">
+            {{ range .news }}
+            <article class="card rounded-xl p-6 hover:border-slate-700/50 transition">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-2">
+                            {{ if eq .Sentiment "BULLISH" }}
+                            <span class="px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Bullish</span>
+                            {{ else if eq .Sentiment "BEARISH" }}
+                            <span class="px-2 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">Bearish</span>
+                            {{ else }}
+                            <span class="px-2 py-0.5 rounded text-xs font-medium bg-slate-500/20 text-slate-400 border border-slate-500/30">Neutral</span>
+                            {{ end }}
+                            <span class="text-slate-500 text-xs">{{ .Source }}</span>
+                            <span class="text-slate-600 text-xs">•</span>
+                            <span class="text-slate-500 text-xs">{{ .PublishedAt.Format "Jan 02, 3:04 PM" }}</span>
+                        </div>
+                        <h2 class="text-lg font-semibold text-white mb-2 hover:text-emerald-400 transition">
+                            <a href="{{ .URL }}" target="_blank" rel="noopener">{{ .Title }}</a>
+                        </h2>
+                        <p class="text-slate-400 text-sm line-clamp-2">{{ .Description }}</p>
+                        {{ if .Keywords }}
+                        <div class="flex flex-wrap gap-2 mt-3">
+                            {{ range $i, $kw := (split .Keywords ",") }}
+                            {{ if and (lt $i 5) (ne $kw "") }}
+                            <span class="px-2 py-0.5 rounded text-xs bg-slate-800 text-slate-400">{{ $kw }}</span>
+                            {{ end }}
+                            {{ end }}
+                        </div>
+                        {{ end }}
+                    </div>
+                    <div class="ml-4 flex items-center space-x-2">
+                        <div class="text-right">
+                            <p class="text-xs text-slate-500">Score</p>
+                            <p class="font-mono font-medium {{ if gt .SentimentScore 0.0 }}text-emerald-400{{ else if lt .SentimentScore 0.0 }}text-red-400{{ else }}text-slate-400{{ end }}">
+                                {{ printf "%+.2f" .SentimentScore }}
+                            </p>
+                        </div>
+                        <a href="{{ .URL }}" target="_blank" rel="noopener" class="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition">
+                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </article>
+            {{ else }}
+            <div class="card rounded-xl p-12 text-center">
+                <svg class="w-16 h-16 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                </svg>
+                <h3 class="text-xl font-semibold text-white mb-2">No News Yet</h3>
+                <p class="text-slate-400 mb-6">Click refresh to fetch the latest market news</p>
+                <button onclick="refreshNews()" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 rounded-lg font-medium transition">
+                    Fetch News
+                </button>
+            </div>
+            {{ end }}
+        </div>
+    </main>
+
+    <script>
+        // Count news by sentiment
+        document.addEventListener('DOMContentLoaded', function() {
+            const news = {{ .news }};
+            let bullish = 0, bearish = 0, neutral = 0;
+            
+            if (news) {
+                news.forEach(n => {
+                    if (n.sentiment === 'BULLISH') bullish++;
+                    else if (n.sentiment === 'BEARISH') bearish++;
+                    else neutral++;
+                });
+            }
+            
+            document.getElementById('bullish-count').textContent = bullish;
+            document.getElementById('bearish-count').textContent = bearish;
+            document.getElementById('neutral-count').textContent = neutral;
+        });
+
+        async function refreshNews() {
+            const btn = document.getElementById('refresh-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Refreshing...</span>';
+
+            try {
+                await fetch('/api/v1/news/refresh', { method: 'POST' });
+                window.location.reload();
+            } catch (err) {
+                alert('Failed to refresh news');
+                btn.disabled = false;
+                btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span>Refresh</span>';
+            }
+        }
+    </script>
+</body>
+</html>
+

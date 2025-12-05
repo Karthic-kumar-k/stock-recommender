@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0a0f1a;
+            background-image: 
+                radial-gradient(ellipse at 20% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+            min-height: 100vh;
+        }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .card {
+            background: linear-gradient(135deg, #1a2234 0%, rgba(26, 34, 52, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .drop-zone {
+            border: 2px dashed rgba(100, 116, 139, 0.5);
+            transition: all 0.3s ease;
+        }
+        .drop-zone.dragover {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+    </style>
+</head>
+<body class="text-slate-100">
+    <!-- Navigation -->
+    <nav class="border-b border-slate-800/50 backdrop-blur-xl sticky top-0 z-50 bg-slate-900/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                        </div>
+                        <span class="text-xl font-semibold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">StockChef</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="/" class="text-slate-400 hover:text-slate-200 transition">Dashboard</a>
+                    <a href="/news" class="text-slate-400 hover:text-slate-200 transition">News</a>
+                    <a href="/upload" class="text-emerald-400 font-medium">Upload</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-white mb-2">Upload Screener Data</h1>
+            <p class="text-slate-400">Import stock data from screener.in CSV exports</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Upload Section -->
+            <div class="card rounded-xl p-6">
+                <h2 class="text-lg font-semibold text-white mb-4">Upload CSV File</h2>
+                
+                <form id="upload-form" enctype="multipart/form-data">
+                    <div id="drop-zone" class="drop-zone rounded-xl p-8 text-center cursor-pointer mb-4">
+                        <input type="file" id="file-input" name="file" accept=".csv" class="hidden">
+                        <div id="drop-content">
+                            <svg class="w-12 h-12 text-slate-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            <p class="text-slate-300 mb-2">Drag & drop your CSV file here</p>
+                            <p class="text-slate-500 text-sm">or click to browse</p>
+                        </div>
+                        <div id="file-selected" class="hidden">
+                            <svg class="w-12 h-12 text-emerald-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <p class="text-emerald-400 font-medium" id="file-name"></p>
+                            <p class="text-slate-500 text-sm" id="file-size"></p>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="upload-btn" disabled class="w-full px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 disabled:from-slate-700 disabled:to-slate-600 disabled:cursor-not-allowed rounded-lg font-medium transition shadow-lg shadow-emerald-500/20 disabled:shadow-none">
+                        Upload & Process
+                    </button>
+                </form>
+
+                <!-- Upload Result -->
+                <div id="upload-result" class="hidden mt-4 p-4 rounded-lg"></div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="space-y-6">
+                <div class="card rounded-xl p-6">
+                    <h2 class="text-lg font-semibold text-white mb-4">How to Export from Screener.in</h2>
+                    <ol class="space-y-3 text-slate-300">
+                        <li class="flex items-start space-x-3">
+                            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm font-medium">1</span>
+                            <span>Go to <a href="https://www.screener.in/screens/" target="_blank" class="text-emerald-400 hover:underline">screener.in/screens</a></span>
+                        </li>
+                        <li class="flex items-start space-x-3">
+                            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm font-medium">2</span>
+                            <span>Create or select a screen with your criteria</span>
+                        </li>
+                        <li class="flex items-start space-x-3">
+                            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm font-medium">3</span>
+                            <span>Click "Export to Excel" to download the data</span>
+                        </li>
+                        <li class="flex items-start space-x-3">
+                            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm font-medium">4</span>
+                            <span>Upload the downloaded CSV file here</span>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="card rounded-xl p-6">
+                    <h2 class="text-lg font-semibold text-white mb-4">Supported Columns</h2>
+                    <div class="flex flex-wrap gap-2">
+                        {{ range .columns }}
+                        <span class="px-2 py-1 rounded text-xs bg-slate-800 text-slate-400 border border-slate-700">{{ . }}</span>
+                        {{ end }}
+                    </div>
+                    <p class="text-slate-500 text-sm mt-4">The CSV must contain at least a Symbol or Name column. Other columns are optional.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const dropContent = document.getElementById('drop-content');
+        const fileSelected = document.getElementById('file-selected');
+        const fileName = document.getElementById('file-name');
+        const fileSize = document.getElementById('file-size');
+        const uploadResult = document.getElementById('upload-result');
+
+        // Click to select file
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop handlers
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.name.endsWith('.csv')) {
+                alert('Please select a CSV file');
+                return;
+            }
+
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            dropContent.classList.add('hidden');
+            fileSelected.classList.remove('hidden');
+            uploadBtn.disabled = false;
+
+            // Store file for upload
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' bytes';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        document.getElementById('upload-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+            try {
+                const response = await fetch('/api/v1/screener/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    uploadResult.innerHTML = `
+                        <div class="flex items-center space-x-2 text-emerald-400 mb-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span class="font-semibold">Upload Successful!</span>
+                        </div>
+                        <div class="text-slate-300 text-sm space-y-1">
+                            <p>Total Records: ${data.total_records}</p>
+                            <p>Created: ${data.created}</p>
+                            <p>Updated: ${data.updated}</p>
+                        </div>
+                        <a href="/" class="mt-3 inline-block text-emerald-400 hover:text-emerald-300 text-sm font-medium">← Back to Dashboard</a>
+                    `;
+                    uploadResult.className = 'mt-4 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20';
+                } else {
+                    uploadResult.innerHTML = `
+                        <div class="flex items-center space-x-2 text-red-400 mb-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            <span class="font-semibold">Upload Failed</span>
+                        </div>
+                        <p class="text-slate-300 text-sm">${data.error || 'Unknown error occurred'}</p>
+                    `;
+                    uploadResult.className = 'mt-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20';
+                }
+                uploadResult.classList.remove('hidden');
+            } catch (err) {
+                uploadResult.innerHTML = `
+                    <div class="flex items-center space-x-2 text-red-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        <span>Network error. Please try again.</span>
+                    </div>
+                `;
+                uploadResult.className = 'mt-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20';
+                uploadResult.classList.remove('hidden');
+            }
+
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Upload & Process';
+        });
+    </script>
+</body>
+</html>
+
